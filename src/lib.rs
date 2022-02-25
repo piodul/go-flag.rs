@@ -41,8 +41,8 @@
 //! let mut force = false;
 //! let mut lines = 10_i32;
 //! let args: Vec<String> = go_flag::parse(|flags| {
-//!     flags.add_flag("f", &mut force);
-//!     flags.add_flag("lines", &mut lines);
+//!     flags.add_flag("f", "force", &mut force);
+//!     flags.add_flag("lines", "lines", &mut lines);
 //! });
 //! # drop(args);
 //! ```
@@ -73,8 +73,8 @@
 //! let mut lines = 10_i32;
 //! let args: Vec<String> =
 //!     go_flag::parse_with_warnings(WarningMode::Error, |flags| {
-//!         flags.add_flag("f", &mut force);
-//!         flags.add_flag("lines", &mut lines);
+//!         flags.add_flag("f", "force", &mut force);
+//!         flags.add_flag("lines", "lines", &mut lines);
 //!     });
 //! # drop(args);
 //! ```
@@ -105,8 +105,8 @@ mod unit_parsing;
 /// let args: Vec<String>;
 /// {
 ///     let mut flags = FlagSet::new();
-///     flags.add_flag("f", &mut force);
-///     flags.add_flag("lines", &mut lines);
+///     flags.add_flag("f", "force", &mut force);
+///     flags.add_flag("lines", "lines", &mut lines);
 ///     args = flags.parse(&["-f", "--lines", "20", "--", "foo"])?;
 /// }
 /// assert_eq!(force, true);
@@ -128,7 +128,7 @@ impl<'a> FlagSet<'a> {
     /// ```rust
     /// # use go_flag::FlagSet;
     /// let mut flags = FlagSet::new();
-    /// # flags.add_flag("f", &mut false);
+    /// # flags.add_flag("f", "force", &mut false);
     /// ```
     pub fn new() -> Self {
         Self {
@@ -148,10 +148,10 @@ impl<'a> FlagSet<'a> {
     /// # use go_flag::FlagSet;
     /// let mut force = false;
     /// let mut flags = FlagSet::new();
-    /// flags.add_flag("f", &mut force);
+    /// flags.add_flag("f", "force", &mut force);
     /// ```
-    pub fn add_flag(&mut self, name: &'a str, value: &'a mut dyn FlagSetter) {
-        let value = FlagSpec { r: value };
+    pub fn add_flag(&mut self, name: &'a str, description: &'a str, value: &'a mut dyn FlagSetter) {
+        let value = FlagSpec { r: value, desc: description };
         let old = self.flag_specs.insert(name, value);
         if old.is_some() {
             panic!("multiple flags with same name: {}", name);
@@ -178,7 +178,7 @@ impl<'a> FlagSet<'a> {
     /// # use go_flag::FlagSet;
     /// let mut force = false;
     /// let mut flags = FlagSet::new();
-    /// flags.add_flag("f", &mut force);
+    /// flags.add_flag("f", "force", &mut force);
     /// let args: Vec<String> = flags.parse(&["-f", "foo"])?;
     /// assert_eq!(args, vec![String::from("foo")]);
     /// # Ok(())
@@ -212,7 +212,7 @@ impl<'a> FlagSet<'a> {
     /// let mut warnings = Vec::new();
     /// let mut force = false;
     /// let mut flags = FlagSet::new();
-    /// flags.add_flag("f", &mut force);
+    /// flags.add_flag("f", "force", &mut force);
     /// let args: Vec<String> = flags
     ///     .parse_with_warnings(&["--f", "foo", "-non-flag"], Some(&mut warnings))?;
     /// assert_eq!(args, vec![String::from("foo"), String::from("-non-flag")]);
@@ -337,6 +337,7 @@ fn reborrow_option_mut<'a, T>(x: &'a mut Option<&mut T>) -> Option<&'a mut T> {
 
 struct FlagSpec<'a> {
     r: &'a mut dyn FlagSetter,
+    desc: &'a str,
 }
 
 impl<'a> fmt::Debug for FlagSpec<'a> {
@@ -350,6 +351,7 @@ impl<'a> fmt::Debug for FlagSpec<'a> {
 
         f.debug_struct("FlagSpec")
             .field("r", &FlagSetterPlaceholder(self.r))
+            .field("desc", &self.desc)
             .finish()
     }
 }
@@ -377,8 +379,8 @@ impl<'a> fmt::Debug for FlagSpec<'a> {
 /// let mut lines = 10_i32;
 /// let args = ["-f", "--", "foo"];
 /// let args: Vec<String> = go_flag::parse_args(&args, |flags| {
-///     flags.add_flag("f", &mut force);
-///     flags.add_flag("lines", &mut lines);
+///     flags.add_flag("f", "force", &mut force);
+///     flags.add_flag("lines", "lines", &mut lines);
 /// })?;
 /// assert_eq!(force, true);
 /// assert_eq!(lines, 10);
@@ -419,8 +421,8 @@ where
 /// let args = ["--f", "--", "foo"];
 /// let args: Vec<String> =
 ///     go_flag::parse_args_with_warnings(&args, Some(&mut warnings), |flags| {
-///         flags.add_flag("f", &mut force);
-///         flags.add_flag("lines", &mut lines);
+///         flags.add_flag("f", "force", &mut force);
+///         flags.add_flag("lines", "lines", &mut lines);
 ///     })?;
 /// assert_eq!(force, true);
 /// assert_eq!(lines, 10);
@@ -472,8 +474,8 @@ where
 /// let mut force = false;
 /// let mut lines = 10_i32;
 /// let args: Vec<String> = go_flag::parse(|flags| {
-///     flags.add_flag("f", &mut force);
-///     flags.add_flag("lines", &mut lines);
+///     flags.add_flag("f", "force", &mut force);
+///     flags.add_flag("lines", "lines", &mut lines);
 /// });
 /// # drop(args);
 /// ```
@@ -520,8 +522,8 @@ where
 /// let mut lines = 10_i32;
 /// let args: Vec<String> =
 ///     go_flag::parse_with_warnings(WarningMode::Error, |flags| {
-///         flags.add_flag("f", &mut force);
-///         flags.add_flag("lines", &mut lines);
+///         flags.add_flag("f", "force", &mut force);
+///         flags.add_flag("lines", "lines", &mut lines);
 ///     });
 /// # drop(args);
 /// ```
@@ -576,8 +578,8 @@ mod tests {
             let mut force = false;
             let mut lines = 10_i32;
             let args = parse_args(args, |flags| {
-                flags.add_flag("f", &mut force);
-                flags.add_flag("lines", &mut lines);
+                flags.add_flag("f", "force", &mut force);
+                flags.add_flag("lines", "lines", &mut lines);
             })?;
             Ok((force, lines, args))
         };
