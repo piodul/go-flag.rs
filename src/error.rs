@@ -11,6 +11,8 @@ pub enum FlagError {
     ArgumentNeeded { name: String },
     /// Failed to parse a flag argument. E.g. `--lines=10XYZ`
     ParseError { error: FlagParseError },
+    /// A `--h` of `--help` flag was provided
+    HelpRequested,
 }
 
 impl fmt::Display for FlagError {
@@ -21,6 +23,7 @@ impl fmt::Display for FlagError {
             UnknownFlag { name } => write!(f, "flag provided but not defined: -{}", name),
             ArgumentNeeded { name } => write!(f, "flag needs an argument: -{}", name),
             ParseError { .. } => write!(f, "parse error"),
+            HelpRequested => write!(f, "help requested"),
         }
     }
 }
@@ -33,6 +36,7 @@ impl std::error::Error for FlagError {
             UnknownFlag { .. } => "flag provided but not defined",
             ArgumentNeeded { .. } => "flag needs an argument",
             ParseError { .. } => "parse error",
+            HelpRequested => "help requested",
         }
     }
 
@@ -43,6 +47,7 @@ impl std::error::Error for FlagError {
             UnknownFlag { .. } => None,
             ArgumentNeeded { .. } => None,
             ParseError { error } => Some(error),
+            HelpRequested => None,
         }
     }
 }
